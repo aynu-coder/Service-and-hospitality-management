@@ -98,16 +98,16 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   if (!state.isAuthenticated) {
     return (
-      <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#4A312B] bg-[#2C1B17]/95 backdrop-blur-md px-4 py-3.5 sm:px-7">
+      <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#E8ECF2] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-7">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#A8846F] text-[#2C1B17]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF5A1F] text-white">
             <UtensilsCrossed className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-display text-lg font-bold tracking-tight text-[#FAF6F0] truncate">
+            <h1 className="font-display text-lg font-bold tracking-tight text-[#111827] truncate">
               {state.config.hotelName}
             </h1>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#D4C4B7]">
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
               <span>{formattedDate}</span>
               <span aria-hidden="true">·</span>
               <span>{state.activeDepartment}</span>
@@ -122,10 +122,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             aria-label="Filter department menu"
             value={state.activeDepartment}
             onChange={(e) => setActiveDepartment(e.target.value as DepartmentName)}
-            className="hidden sm:block rounded-lg border border-[#5C3E36] bg-[#3B2621] px-3 py-2 text-xs font-medium text-[#FAF6F0] outline-none focus:border-[#C49B82]"
+            className="hidden sm:block rounded-lg border border-[#E8ECF2] bg-[#F7F8FA] px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#FF5A1F]"
           >
             {DEPARTMENTS.map((dept) => (
-              <option key={dept} value={dept} className="bg-[#2C1B17] text-[#FAF6F0]">
+              <option key={dept} value={dept} className="bg-white text-slate-900">
                 {dept}
               </option>
             ))}
@@ -133,7 +133,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           <button
             onClick={onOpenLogin}
-            className="flex items-center gap-2 rounded-lg bg-[#EAE3DA] px-4 py-2 text-xs font-bold text-[#2C1B17] hover:bg-[#FAF6F0] transition-colors whitespace-nowrap shrink-0"
+            className="flex items-center gap-2 rounded-lg bg-[#FF5A1F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#E64A12] transition-colors whitespace-nowrap shrink-0"
           >
             <Lock className="h-3.5 w-3.5" />
             <span>Dashboard Login</span>
