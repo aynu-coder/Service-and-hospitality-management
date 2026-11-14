@@ -21,6 +21,7 @@ export type PermissionKey =
   | 'shift_approve'
   | 'reports_export'
   | 'staff_audit'
+  | 'user_manage'
   | 'settings_admin';
 
 export type DepartmentName =
@@ -108,6 +109,7 @@ export type NavSection =
   | 'inventory'
   | 'finance'
   | 'staff-audit'
+  | 'users'
   | 'reports'
   | 'settings';
 
@@ -131,6 +133,8 @@ export interface MenuProduct {
   id: string;
   sku: string;
   name: string;
+  description?: string;
+  imageUrl?: string;
   category:
     | 'Main Dishes'
     | 'Grill & Burgers'

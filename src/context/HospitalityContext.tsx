@@ -65,6 +65,18 @@ interface HospitalityContextValue {
   loginWithPassword: (username: string, password: string) => { ok: boolean; error?: string; employee?: Employee };
   logout: () => void;
   updateEmployeePassword: (employeeId: string, newPassword: string) => void;
+  addEmployee: (input: {
+    name: string;
+    username: string;
+    password: string;
+    role: UserRole;
+    department: Exclude<DepartmentName, 'All Departments'>;
+  }) => { ok: boolean; error?: string; employee?: Employee };
+  updateEmployee: (
+    employeeId: string,
+    partial: Partial<Pick<Employee, 'name' | 'username' | 'password' | 'role' | 'department' | 'status'>>
+  ) => { ok: boolean; error?: string };
+  deleteEmployee: (employeeId: string) => { ok: boolean; error?: string };
   switchEmployee: (employeeId: string) => void;
   setActiveDepartment: (dept: DepartmentName) => void;
   getProductCost: (product: MenuProduct) => number;
@@ -113,10 +125,39 @@ function loadInitialState(): HospitalityState {
       const seedMatch = INITIAL_HOSPITALITY_STATE.employees.find((s) => s.id === emp.id);
       return { ...emp, password: seedMatch?.password || '123456' };
     });
+    const existingProducts = (parsed.menuProducts || INITIAL_HOSPITALITY_STATE.menuProducts).map(
+      (prod) => {
+        const seedMatch = INITIAL_HOSPITALITY_STATE.menuProducts.find((s) => s.id === prod.id);
+        return {
+          ...prod,
+          imageUrl: prod.imageUrl || seedMatch?.imageUrl,
+          description: prod.description || seedMatch?.description,
+        };
+      }
+    );
+    const existingIds = new Set(existingProducts.map((p) => p.id));
+    const missingSeedProducts = INITIAL_HOSPITALITY_STATE.menuProducts.filter(
+      (p) => !existingIds.has(p.id)
+    );
+    const mergedProducts = [...existingProducts, ...missingSeedProducts];
+
+    const rolePerms = { ...INITIAL_HOSPITALITY_STATE.config.rolePermissions, ...parsed.config.rolePermissions };
+    (['System Administrator', 'Hotel Manager'] as UserRole[]).forEach((r) => {
+      const list = rolePerms[r] || [];
+      if (!list.includes('user_manage')) {
+        rolePerms[r] = [...list, 'user_manage'];
+      }
+    });
+
     return {
       ...parsed,
+      config: {
+        ...parsed.config,
+        rolePermissions: rolePerms,
+      },
       isAuthenticated: Boolean(parsed.isAuthenticated),
       employees: mergedEmployees,
+      menuProducts: mergedProducts,
     };
   } catch {
     return INITIAL_HOSPITALITY_STATE;
@@ -325,6 +366,135 @@ export const HospitalityProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ],
       };
     });
+  };
+
+  const addEmployee = (input: {
+    name: string;
+    username: string;
+    password: string;
+    role: UserRole;
+    department: Exclude<DepartmentName, 'All Departments'>;
+  }): { ok: boolean; error?: string; employee?: Employee } => {
+    const cleanName = input.name.trim();
+    const cleanUsername = input.username.trim().toLowerCase();
+    const cleanPassword = input.password.trim();
+    if (!cleanName) return { ok: false, error: 'Employee full name is required.' };
+    if (!cleanUsername) return { ok: false, error: 'Login username is required.' };
+    if (cleanPassword.length < 4) return { ok: false, error: 'Password must be at least 4 characters.' };
+    if (state.employees.some((e) => e.username.toLowerCase() === cleanUsername)) {
+      return { ok: false, error: `Username "${cleanUsername}" is already assigned to another employee.` };
+    }
+
+    const newEmployee: Employee = {
+      id: `emp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+      name: cleanName,
+      username: cleanUsername,
+      password: cleanPassword,
+      role: input.role,
+      department: input.department,
+      status: 'Active',
+    };
+
+    setState((prev) => ({
+      ...prev,
+      employees: [...prev.employees, newEmployee],
+      auditLogs: [
+        makeAudit(
+          'Employee Created',
+          'Security',
+          newEmployee.username,
+          `Added new employee ${newEmployee.name} as ${newEmployee.role} (${newEmployee.department}).`
+        ),
+        ...prev.auditLogs,
+      ],
+    }));
+
+    return { ok: true, employee: newEmployee };
+  };
+
+  const updateEmployee = (
+    employeeId: string,
+    partial: Partial<Pick<Employee, 'name' | 'username' | 'password' | 'role' | 'department' | 'status'>>
+  ): { ok: boolean; error?: string } => {
+    const target = state.employees.find((e) => e.id === employeeId);
+    if (!target) return { ok: false, error: 'Employee not found.' };
+
+    if (partial.username) {
+      const nextUser = partial.username.trim().toLowerCase();
+      if (!nextUser) return { ok: false, error: 'Username cannot be empty.' };
+      if (state.employees.some((e) => e.id !== employeeId && e.username.toLowerCase() === nextUser)) {
+        return { ok: false, error: `Username "${nextUser}" is already in use.` };
+      }
+    }
+
+    if (target.role === 'System Administrator') {
+      const nextRole = partial.role ?? target.role;
+      const nextStatus = partial.status ?? target.status;
+      const remainingActiveAdmins = state.employees.filter(
+        (e) => e.id !== employeeId && e.role === 'System Administrator' && e.status === 'Active'
+      ).length;
+      if ((nextRole !== 'System Administrator' || nextStatus !== 'Active') && remainingActiveAdmins === 0) {
+        return { ok: false, error: 'At least one active System Administrator account must remain.' };
+      }
+    }
+
+    setState((prev) => ({
+      ...prev,
+      employees: prev.employees.map((e) =>
+        e.id === employeeId
+          ? {
+              ...e,
+              ...partial,
+              name: partial.name !== undefined ? partial.name.trim() || e.name : e.name,
+              username: partial.username !== undefined ? partial.username.trim().toLowerCase() : e.username,
+              password: partial.password !== undefined ? partial.password.trim() || e.password : e.password,
+            }
+          : e
+      ),
+      auditLogs: [
+        makeAudit(
+          'Employee Updated',
+          'Security',
+          target.username,
+          `Updated employee record for ${target.name} (${Object.keys(partial).join(', ')}).`
+        ),
+        ...prev.auditLogs,
+      ],
+    }));
+
+    return { ok: true };
+  };
+
+  const deleteEmployee = (employeeId: string): { ok: boolean; error?: string } => {
+    const target = state.employees.find((e) => e.id === employeeId);
+    if (!target) return { ok: false, error: 'Employee record not found.' };
+    if (employeeId === currentEmployee.id) {
+      return { ok: false, error: 'You cannot delete the currently signed-in employee account.' };
+    }
+    if (target.role === 'System Administrator') {
+      const otherActiveAdmins = state.employees.filter(
+        (e) => e.id !== employeeId && e.role === 'System Administrator' && e.status === 'Active'
+      ).length;
+      if (otherActiveAdmins === 0) {
+        return { ok: false, error: 'Cannot delete the last active System Administrator.' };
+      }
+    }
+
+    setState((prev) => ({
+      ...prev,
+      employees: prev.employees.filter((e) => e.id !== employeeId),
+      auditLogs: [
+        makeAudit(
+          'Employee Deleted',
+          'Security',
+          target.username,
+          `Removed employee ${target.name} (${target.role}) from BelTech directory.`
+        ),
+        ...prev.auditLogs,
+      ],
+    }));
+
+    return { ok: true };
   };
 
   const switchEmployee = (employeeId: string) => {
@@ -1267,6 +1437,9 @@ export const HospitalityProvider: React.FC<{ children: React.ReactNode }> = ({ c
         loginWithPassword,
         logout,
         updateEmployeePassword,
+        addEmployee,
+        updateEmployee,
+        deleteEmployee,
         switchEmployee,
         setActiveDepartment,
         getProductCost,

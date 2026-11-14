@@ -11,6 +11,7 @@ import { BarBonoView } from './components/BarBonoView';
 import { InventoryView } from './components/InventoryView';
 import { FinanceView } from './components/FinanceView';
 import { StaffAuditView } from './components/StaffAuditView';
+import { UserManagementView } from './components/UserManagementView';
 import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
 import { Employee, NavSection } from './types/hospitality';
@@ -83,7 +84,7 @@ const AppShell: React.FC = () => {
           onLogout={handleLogout}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-7">
+        <main className={resolvedSection === 'pos' ? 'flex-1' : 'flex-1 p-4 sm:p-6 lg:p-7'}>
           {resolvedSection === 'dashboard' && <DashboardView onNavigate={setActiveSection} />}
           {resolvedSection === 'pos' && (
             <PosView
@@ -99,6 +100,7 @@ const AppShell: React.FC = () => {
           {resolvedSection === 'inventory' && <InventoryView />}
           {resolvedSection === 'finance' && <FinanceView />}
           {resolvedSection === 'staff-audit' && <StaffAuditView />}
+          {resolvedSection === 'users' && <UserManagementView />}
           {resolvedSection === 'reports' && <ReportsView />}
           {resolvedSection === 'settings' && <SettingsView />}
         </main>

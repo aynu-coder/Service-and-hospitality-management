@@ -8,6 +8,7 @@ import {
   Boxes,
   Wallet,
   Users,
+  UserCog,
   FileSpreadsheet,
   Settings,
   Building2,
@@ -85,6 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     { id: 'finance', label: 'Finance & Shifts', icon: Wallet, permission: 'finance_view' },
     { id: 'staff-audit', label: 'Staff & Audit', icon: Users, permission: 'staff_audit' },
+    { id: 'users', label: 'User Management', icon: UserCog, permission: 'user_manage' },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet, permission: 'reports_export' },
     { id: 'settings', label: 'Settings', icon: Settings, permission: 'settings_admin' },
   ];

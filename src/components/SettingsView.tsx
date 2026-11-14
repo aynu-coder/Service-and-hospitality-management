@@ -27,6 +27,7 @@ const PERMISSION_LABELS: { key: PermissionKey; label: string }[] = [
   { key: 'shift_approve', label: 'Approve Cashier Shifts' },
   { key: 'reports_export', label: 'Export Reports' },
   { key: 'staff_audit', label: 'Staff & Audit Logs' },
+  { key: 'user_manage', label: 'Manage Users & Employees' },
   { key: 'settings_admin', label: 'System Settings' },
 ];
 
