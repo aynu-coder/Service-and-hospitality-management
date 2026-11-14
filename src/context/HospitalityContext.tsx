@@ -62,6 +62,9 @@ interface HospitalityContextValue {
   state: HospitalityState;
   currentEmployee: Employee;
   hasPermission: (perm: PermissionKey) => boolean;
+  loginWithPassword: (username: string, password: string) => { ok: boolean; error?: string; employee?: Employee };
+  logout: () => void;
+  updateEmployeePassword: (employeeId: string, newPassword: string) => void;
   switchEmployee: (employeeId: string) => void;
   setActiveDepartment: (dept: DepartmentName) => void;
   getProductCost: (product: MenuProduct) => number;
@@ -105,7 +108,16 @@ function loadInitialState(): HospitalityState {
     if (!parsed || !parsed.config || !Array.isArray(parsed.orders)) {
       return INITIAL_HOSPITALITY_STATE;
     }
-    return parsed;
+    const mergedEmployees = parsed.employees.map((emp) => {
+      if (emp.password) return emp;
+      const seedMatch = INITIAL_HOSPITALITY_STATE.employees.find((s) => s.id === emp.id);
+      return { ...emp, password: seedMatch?.password || '123456' };
+    });
+    return {
+      ...parsed,
+      isAuthenticated: Boolean(parsed.isAuthenticated),
+      employees: mergedEmployees,
+    };
   } catch {
     return INITIAL_HOSPITALITY_STATE;
   }
@@ -128,6 +140,9 @@ export const HospitalityProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 
   const hasPermission = (perm: PermissionKey): boolean => {
+    if (!state.isAuthenticated) {
+      return perm === 'pos_create';
+    }
     const perms = state.config.rolePermissions[currentEmployee.role] || [];
     return perms.includes(perm);
   };
@@ -240,6 +255,76 @@ export const HospitalityProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
 
     return { updatedStock: nextStock, movements, lowStockAlerts };
+  };
+
+  const loginWithPassword = (
+    username: string,
+    password: string
+  ): { ok: boolean; error?: string; employee?: Employee } => {
+    const cleanUser = username.trim().toLowerCase();
+    const emp = state.employees.find((e) => e.username.toLowerCase() === cleanUser);
+    if (!emp || emp.password !== password) {
+      return { ok: false, error: 'Invalid username or password. Please verify your credentials.' };
+    }
+    if (emp.status !== 'Active') {
+      return { ok: false, error: 'This employee account is currently off duty or disabled.' };
+    }
+    setState((prev) => ({
+      ...prev,
+      isAuthenticated: true,
+      currentEmployeeId: emp.id,
+      auditLogs: [
+        makeAudit(
+          'User Logged In',
+          'Security',
+          emp.username,
+          `${emp.name} (${emp.role}) authenticated with password to access staff dashboard.`,
+          emp
+        ),
+        ...prev.auditLogs,
+      ],
+    }));
+    return { ok: true, employee: emp };
+  };
+
+  const logout = () => {
+    setState((prev) => ({
+      ...prev,
+      isAuthenticated: false,
+      currentEmployeeId: 'emp-csh-1',
+      auditLogs: [
+        makeAudit(
+          'User Logged Out',
+          'Security',
+          currentEmployee.username,
+          `${currentEmployee.name} logged out and returned to public Order Terminal.`
+        ),
+        ...prev.auditLogs,
+      ],
+    }));
+  };
+
+  const updateEmployeePassword = (employeeId: string, newPassword: string) => {
+    if (!newPassword.trim()) return;
+    setState((prev) => {
+      const target = prev.employees.find((e) => e.id === employeeId);
+      if (!target) return prev;
+      return {
+        ...prev,
+        employees: prev.employees.map((e) =>
+          e.id === employeeId ? { ...e, password: newPassword.trim() } : e
+        ),
+        auditLogs: [
+          makeAudit(
+            'Password Updated',
+            'Security',
+            target.username,
+            `Password updated for ${target.name} (${target.role}).`
+          ),
+          ...prev.auditLogs,
+        ],
+      };
+    });
   };
 
   const switchEmployee = (employeeId: string) => {
@@ -1179,6 +1264,9 @@ export const HospitalityProvider: React.FC<{ children: React.ReactNode }> = ({ c
         state,
         currentEmployee,
         hasPermission,
+        loginWithPassword,
+        logout,
+        updateEmployeePassword,
         switchEmployee,
         setActiveDepartment,
         getProductCost,

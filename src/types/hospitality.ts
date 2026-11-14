@@ -115,6 +115,7 @@ export interface Employee {
   id: string;
   name: string;
   username: string;
+  password: string;
   role: UserRole;
   department: Exclude<DepartmentName, 'All Departments'>;
   avatarUrl?: string;
@@ -342,6 +343,7 @@ export interface PropertyConfig {
 
 export interface HospitalityState {
   config: PropertyConfig;
+  isAuthenticated: boolean;
   currentEmployeeId: string;
   activeDepartment: DepartmentName;
   employees: Employee[];

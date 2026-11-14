@@ -31,7 +31,10 @@ const PERMISSION_LABELS: { key: PermissionKey; label: string }[] = [
 ];
 
 export const SettingsView: React.FC = () => {
-  const { state, updateConfig, toggleRolePermission, resetDemoData } = useHospitality();
+  const { state, updateConfig, toggleRolePermission, updateEmployeePassword, resetDemoData } =
+    useHospitality();
+  const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
+  const [pwSavedId, setPwSavedId] = useState<string | null>(null);
   const [hotelName, setHotelName] = useState(state.config.hotelName);
   const [branchName, setBranchName] = useState(state.config.branchName);
   const [address, setAddress] = useState(state.config.address);
@@ -240,6 +243,65 @@ export const SettingsView: React.FC = () => {
                       </td>
                     );
                   })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Employee Account Passwords */}
+      <div className="rounded-xl border border-[#E8ECF2] bg-white p-6 space-y-4">
+        <div>
+          <h2 className="font-display text-base font-bold text-slate-900">
+            Staff Login Credentials &amp; Password Management
+          </h2>
+          <p className="text-xs text-slate-500">
+            Update employee passwords used to unlock the Dashboard and staff interfaces
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-[#E8ECF2] text-[11px] font-semibold text-slate-500">
+                <th className="py-2 pr-3">Employee</th>
+                <th className="py-2 px-3">Role</th>
+                <th className="py-2 px-3">Username</th>
+                <th className="py-2 px-3">New Password</th>
+                <th className="py-2 pl-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F1F5F9]">
+              {state.employees.map((emp) => (
+                <tr key={emp.id}>
+                  <td className="py-2.5 pr-3 font-semibold text-slate-900">{emp.name}</td>
+                  <td className="py-2.5 px-3 text-slate-600">{emp.role}</td>
+                  <td className="py-2.5 px-3 font-mono text-slate-700">{emp.username}</td>
+                  <td className="py-2.5 px-3">
+                    <input
+                      type="text"
+                      value={passwordDrafts[emp.id] ?? emp.password}
+                      onChange={(e) =>
+                        setPasswordDrafts((prev) => ({ ...prev, [emp.id]: e.target.value }))
+                      }
+                      className="w-40 rounded-lg border border-[#E8ECF2] px-2.5 py-1.5 font-mono text-xs"
+                    />
+                  </td>
+                  <td className="py-2.5 pl-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextPw = passwordDrafts[emp.id] ?? emp.password;
+                        updateEmployeePassword(emp.id, nextPw);
+                        setPwSavedId(emp.id);
+                        setTimeout(() => setPwSavedId(null), 2000);
+                      }}
+                      className="rounded-lg bg-[#181C24] px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
+                    >
+                      {pwSavedId === emp.id ? 'Updated' : 'Save Password'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
