@@ -97,16 +97,16 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   if (publicMode || !state.isAuthenticated) {
     return (
-      <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#E8ECF2] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-7">
+      <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#4A312B] bg-[#2C1B17]/95 backdrop-blur-md px-4 py-3.5 sm:px-7">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF5A1F] text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#A8846F] text-[#2C1B17]">
             <UtensilsCrossed className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-display text-lg font-bold tracking-tight text-[#111827] truncate">
+            <h1 className="font-display text-lg font-bold tracking-tight text-[#FAF6F0] truncate">
               {state.config.hotelName}
             </h1>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#D4C4B7]">
               <span>{formattedDate}</span>
               <span aria-hidden="true">·</span>
               <span>{state.activeDepartment}</span>
@@ -121,10 +121,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             aria-label="Filter department menu"
             value={state.activeDepartment}
             onChange={(e) => setActiveDepartment(e.target.value as DepartmentName)}
-            className="rounded-lg border border-[#E8ECF2] bg-[#F7F8FA] px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#FF5A1F]"
+            className="rounded-lg border border-[#5C3E36] bg-[#3B2621] px-3 py-2 text-xs font-medium text-[#FAF6F0] outline-none focus:border-[#C49B82]"
           >
             {DEPARTMENTS.map((dept) => (
-              <option key={dept} value={dept} className="bg-white text-slate-900">
+              <option key={dept} value={dept} className="bg-[#2C1B17] text-[#FAF6F0]">
                 {dept}
               </option>
             ))}
