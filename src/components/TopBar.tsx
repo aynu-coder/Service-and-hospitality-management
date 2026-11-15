@@ -5,7 +5,6 @@ import {
   Menu,
   CheckCheck,
   Shield,
-  Lock,
   LogOut,
   UtensilsCrossed,
 } from 'lucide-react';
@@ -15,9 +14,9 @@ import { formatTimeShort } from '../utils/formatters';
 
 interface TopBarProps {
   activeSection: NavSection;
+  publicMode?: boolean;
   onOpenMobileMenu: () => void;
   onSelectSection: (section: NavSection) => void;
-  onOpenLogin: () => void;
   onLogout: () => void;
 }
 
@@ -45,9 +44,9 @@ const DEPARTMENTS: DepartmentName[] = [
 
 export const TopBar: React.FC<TopBarProps> = ({
   activeSection,
+  publicMode = false,
   onOpenMobileMenu,
   onSelectSection,
-  onOpenLogin,
   onLogout,
 }) => {
   const {
@@ -96,7 +95,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     else onSelectSection('dashboard');
   };
 
-  if (!state.isAuthenticated) {
+  if (publicMode || !state.isAuthenticated) {
     return (
       <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#E8ECF2] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-7">
         <div className="flex items-center gap-3 min-w-0">
@@ -122,7 +121,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             aria-label="Filter department menu"
             value={state.activeDepartment}
             onChange={(e) => setActiveDepartment(e.target.value as DepartmentName)}
-            className="hidden sm:block rounded-lg border border-[#E8ECF2] bg-[#F7F8FA] px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#FF5A1F]"
+            className="rounded-lg border border-[#E8ECF2] bg-[#F7F8FA] px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#FF5A1F]"
           >
             {DEPARTMENTS.map((dept) => (
               <option key={dept} value={dept} className="bg-white text-slate-900">
@@ -130,14 +129,6 @@ export const TopBar: React.FC<TopBarProps> = ({
               </option>
             ))}
           </select>
-
-          <button
-            onClick={onOpenLogin}
-            className="flex items-center gap-2 rounded-lg bg-[#FF5A1F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#E64A12] transition-colors whitespace-nowrap shrink-0"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            <span>Dashboard Login</span>
-          </button>
         </div>
       </header>
     );

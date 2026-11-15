@@ -28,6 +28,7 @@ import { formatMoney, formatTimeShort } from '../utils/formatters';
 
 interface PosViewProps {
   preselectedTableId?: string;
+  publicMode?: boolean;
   onClearPreselectedTable?: () => void;
 }
 
@@ -52,6 +53,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
 
 export const PosView: React.FC<PosViewProps> = ({
   preselectedTableId,
+  publicMode = false,
   onClearPreselectedTable,
 }) => {
   const { state, currentEmployee, createOrder, updateOrderStatus, hasPermission } =
@@ -217,8 +219,8 @@ export const PosView: React.FC<PosViewProps> = ({
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#F7F8FA] text-[#111827] px-4 py-6 sm:px-7 pb-28">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* Live Ready Orders Banner (for Staff / Cashiers) */}
-        {state.isAuthenticated && readyOrders.length > 0 && (
+        {/* Live Ready Orders Banner (for Staff / Cashiers on /admin) */}
+        {!publicMode && state.isAuthenticated && readyOrders.length > 0 && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 text-xs font-medium text-emerald-900">
               <BellRing className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -283,7 +285,7 @@ export const PosView: React.FC<PosViewProps> = ({
                 </button>
               </div>
 
-              {state.isAuthenticated && (
+              {!publicMode && state.isAuthenticated && (
                 <button
                   type="button"
                   onClick={() => setShowOrdersDrawer((v) => !v)}
@@ -324,7 +326,7 @@ export const PosView: React.FC<PosViewProps> = ({
         )}
 
         {/* Authenticated Recent Orders Drawer */}
-        {state.isAuthenticated && showOrdersDrawer && (
+        {!publicMode && state.isAuthenticated && showOrdersDrawer && (
           <div className="rounded-2xl border border-[#E8ECF2] bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-display text-sm font-bold text-[#111827]">
@@ -864,7 +866,7 @@ export const PosView: React.FC<PosViewProps> = ({
       {step === 'menu' && (
         <div
           className={`no-print fixed bottom-0 right-0 left-0 z-20 border-t border-[#E8ECF2] bg-white/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(15,23,42,0.06)] px-4 py-3.5 sm:px-7 ${
-            state.isAuthenticated ? 'lg:left-64' : ''
+            !publicMode && state.isAuthenticated ? 'lg:left-64' : ''
           }`}
         >
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
