@@ -16,33 +16,69 @@ import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
 import { Employee, NavSection } from './types/hospitality';
 
-function isAdminPath(pathname: string): boolean {
-  const normalized = pathname.replace(/\/+$/, '') || '/';
-  return normalized === '/admin' || normalized.startsWith('/admin/');
+function isAdminLocation(pathname: string, hash: string, search: string): boolean {
+  const normalizedPath = pathname.replace(/\/+$/, '') || '/';
+  if (
+    normalizedPath === '/admin' ||
+    normalizedPath.endsWith('/admin') ||
+    normalizedPath.includes('/admin/')
+  ) {
+    return true;
+  }
+
+  const normalizedHash = hash.replace(/^#/, '').replace(/\/+$/, '');
+  if (normalizedHash === '/admin' || normalizedHash === 'admin' || normalizedHash.startsWith('/admin/')) {
+    return true;
+  }
+
+  const params = new URLSearchParams(search);
+  const routeParam = params.get('route')?.replace(/\/+$/, '');
+  if (params.has('admin') || routeParam === '/admin' || routeParam === 'admin') {
+    return true;
+  }
+
+  return false;
 }
 
 const AppShell: React.FC = () => {
   const { state, hasPermission, logout } = useHospitality();
-  const [pathname, setPathname] = useState<string>(() => window.location.pathname);
+  const [locationState, setLocationState] = useState(() => ({
+    pathname: window.location.pathname,
+    hash: window.location.hash,
+    search: window.location.search,
+  }));
   const [activeSection, setActiveSection] = useState<NavSection>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [preselectedTableId, setPreselectedTableId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const onPopState = () => setPathname(window.location.pathname);
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    const syncLocation = () =>
+      setLocationState({
+        pathname: window.location.pathname,
+        hash: window.location.hash,
+        search: window.location.search,
+      });
+    window.addEventListener('popstate', syncLocation);
+    window.addEventListener('hashchange', syncLocation);
+    return () => {
+      window.removeEventListener('popstate', syncLocation);
+      window.removeEventListener('hashchange', syncLocation);
+    };
   }, []);
 
   const navigate = (to: '/' | '/admin') => {
-    if (window.location.pathname !== to) {
+    if (window.location.pathname !== to || window.location.hash || window.location.search) {
       window.history.pushState({}, '', to);
     }
-    setPathname(to);
+    setLocationState({ pathname: to, hash: '', search: '' });
     window.scrollTo({ top: 0 });
   };
 
-  const adminRoute = isAdminPath(pathname);
+  const adminRoute = isAdminLocation(
+    locationState.pathname,
+    locationState.hash,
+    locationState.search
+  );
 
   const handleOpenPosForTable = (tableId: string) => {
     setPreselectedTableId(tableId);
